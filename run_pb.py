@@ -12,3 +12,4 @@ output_name = list(infer_model.structured_outputs.keys())[0]
 #模型推理代码
 test_data = tf.constant([[4,5,6,7,8,9,1,0]])
 labeling = infer_model(test_data)[output_name]
+print("predict:{}".format(labeling))
