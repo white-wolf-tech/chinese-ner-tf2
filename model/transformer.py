@@ -95,7 +95,7 @@ class transformer(tf.keras.layers.Layer):
         self.config = config
         self.wde = Embedding(config.vocab_size, config.embed)
         self.pte = Embedding(config.max_length, config.embed)
-        self.attention_block = attention_block(config,training)
+        self.attention_blocks = [attention_block(config,training) for i in range(self.config.n_layer)]
         self.ln = LayerNormalization(epsilon=self.config.layer_norm_epsilon)
     def call(self,input_ids):
         seq_embedding = self.wde(input_ids)
@@ -104,5 +104,5 @@ class transformer(tf.keras.layers.Layer):
         position_embedding = self.pte(position_ids)
         hidden_state = self.ln(seq_embedding + position_embedding)
         for i in range(self.config.n_layer):
-            hidden_state = self.attention_block(hidden_state,scale_att=True)
+            hidden_state = self.attention_blocks[i](hidden_state,scale_att=True)
         return hidden_state
