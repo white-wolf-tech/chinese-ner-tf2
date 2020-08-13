@@ -7,4 +7,6 @@
 
 ## 2020.8.13更新
 增加span解码方式
-增加TENER框架，参考(TENER)[https://github.com/fastnlp/TENER]，(文章思想)[https://arxiv.org/abs/1911.04474]
+
+增加TENER框架，参考[TENER](https://github.com/fastnlp/TENER)
+[文章思想](https://arxiv.org/abs/1911.04474)
