@@ -37,7 +37,14 @@ checkpoint_dir = "checkpoint/"
 def build_train_op(config):
     ner = ner_model(config,training=True)
     train_loss = tf.keras.metrics.Mean(name='train_loss')
-    optimizer = tf.keras.optimizers.Adam(config.lr)
+    if config.dynamics_lr:
+        optimizer,lr_schedule = create_optimizer(config.lr,
+                                    config.num_train_steps,
+                                    config.num_warmup_steps,
+                                    min_lr_ratio=config.min_lr_rate,
+                                    weight_decay_rate=config.decay_rate)
+    else:
+        optimizer = tf.keras.optimizers.Adam(config.lr)
     #设置检查点
     ckpt = tf.train.Checkpoint(ner=ner, optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_dir + 'trains', max_to_keep=2)
@@ -126,6 +133,8 @@ def infer(config, dev_set, data_vocab, labels_vocab, last_f1, tokenize):
         last_f1 = average_f1
         print("f1 improve save model...")
         tf.saved_model.save(ner, checkpoint_dir + 'infers/')
+        with open(checkpoint_dir + 'infers/best_f1', 'w') as wf:
+            wf.write(str(last_f1))
     print('average f1 is {}'.format(average_f1))
     return last_f1
 

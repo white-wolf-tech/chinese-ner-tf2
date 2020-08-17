@@ -130,13 +130,14 @@ class FFN(tf.keras.layers.Layer):
         return ffn1
 
 class attention_block(tf.keras.layers.Layer):
-    def __init__(self, config,training):
+    def __init__(self, config,training,scale):
         super(attention_block, self).__init__()
         self.attention = RelativeMultiHeadAttn(
                                 config.embed,
                                 config.head,
                                 config.a_dropout,
-                                training)
+                                training,
+                                scale=scale)
         self.ln0 = LayerNormalization(epsilon=config.layer_norm_epsilon)
         self.ln1 = LayerNormalization(epsilon=config.layer_norm_epsilon)
         self.ffn = FFN(config,training)
@@ -156,8 +157,9 @@ class RelTranformer(tf.keras.layers.Layer):
     """docstring for RelTranformer"""
     def __init__(self, config, trainning):
         super(RelTranformer, self).__init__()
+        self.scale = True
         self.config = config
-        self.tf_layers = [attention_block(config, trainning) for i in range(config.n_layer)]
+        self.tf_layers = [attention_block(config, trainning, self.scale) for i in range(config.n_layer)]
         self.wde = Embedding(config.vocab_size, config.embed)
         #位置编码
         self.weights_embeding = get_embedding(config.max_length,

@@ -1,5 +1,6 @@
 import tensorflow as tf
 from transformer.transformer import transformer
+from transformer.tf_utils import gelu
 from transformer.relative_transformer import RelTranformer
 from .rnn import rnn_layer
 from .crf import crf_log_likelihood,crf_decode
@@ -12,8 +13,6 @@ class Forward(tf.keras.layers.Layer):
         self.config = config
         tgt_size = config.tgt_size
         self.training = training
-        self.dropout = Dropout(config.ff_dropout)
-        self.common_dense = tf.keras.layers.Dense(config.embed,activation=tf.nn.swish)
         if config.decode_type == "crf": #build crf var
             init = tf.keras.initializers.GlorotUniform()
             self.transition_params = tf.Variable(lambda : init([tgt_size,tgt_size]),trainable=True)
@@ -58,9 +57,6 @@ class Forward(tf.keras.layers.Layer):
             return (head_logits,tail_logits)
     
     def call(self, output, label_input=None, label_input0=None, mask=None):
-        output = self.common_dense(output)
-        if self.training:
-            output = self.dropout(output)
         if self.config.decode_type == 'crf':
             return self.crf(output, label_input)
         elif self.config.decode_type == 'span':

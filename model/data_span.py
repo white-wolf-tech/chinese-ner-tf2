@@ -183,49 +183,5 @@ def parse_span_ner(batch, output, tokenize, thr=0.5):
                                  cls=NpEncoder))
     return result
 
-def get_f1_score_label(pre_lines, gold_lines, label="organization"):
-    """
-    打分函数
-    """
-    TP = 0
-    FP = 0
-    FN = 0
-    for pre, gold in zip(pre_lines, gold_lines):
-        pre = pre["label"].get(label, {}).keys()
-        gold = gold["label"].get(label, {}).keys()
-        for i in pre:
-            if i in gold:
-                TP += 1
-            else:
-                FP += 1
-        for i in gold:
-            if i not in pre:
-                FN += 1
-    try:
-        p = float(TP) / float(TP + FP)
-        r = float(TP) / float(TP + FN)
-        f = 2.0 * p * r / (p + r)
-    except Exception as e:
-        p = 0.0
-        r = 0.0
-        f = 0.0
-    print('****************%s*******************'%(label))
-    print('precision:%f, recall:%f, f1:%f'%(p, r, f))
-    return f
-
-def get_f1_score(pre_file="ner_predict.json", gold_file="data/thuctc_valid.json"):
-    pre_lines = [json.loads(line.strip()) for line in open(pre_file) if line.strip()]
-    gold_lines = [json.loads(line.strip()) for line in open(gold_file) if line.strip()]
-    f_score = {}
-    labels = ['address', 'book', 'company', 'game', 'government', 'movie', 'name', 'organization', 'position', 'scene']
-    sum = 0
-    for label in labels:
-        f = get_f1_score_label(pre_lines, gold_lines, label=label)
-        f_score[label] = f
-        sum += f
-    avg = sum / len(labels)
-    print('average f1 is:%f'%(avg))
-
-
 if __name__ == '__main__':
     gen_ner_vocab('../train_data/ts/', '../voc_dir/label_span.vocab', '../voc_dir/data_spand.vocab', '../test/dev_span.json')
