@@ -14,6 +14,7 @@ class nerConfig():
         self.ffw_rate= 4 #ffw两层之间倍率
         self.lr = 5e-4 #学习率设置
         self.dynamics_lr = True #是否使用warmup方式
+        self.scale = True #是否使用稀疏注意力方式
         self.min_lr_rate = 0.005 #截止学习率是初始学习率的多少
         self.decay_rate = 0.99 #学习率衰减率
         self.num_warmup_steps = 10000

@@ -157,7 +157,7 @@ class RelTranformer(tf.keras.layers.Layer):
     """docstring for RelTranformer"""
     def __init__(self, config, trainning):
         super(RelTranformer, self).__init__()
-        self.scale = True
+        self.scale = config.scale
         self.config = config
         self.tf_layers = [attention_block(config, trainning, self.scale) for i in range(config.n_layer)]
         self.wde = Embedding(config.vocab_size, config.embed)
