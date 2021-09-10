@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import LayerNormalization,Conv1D,Dropout,Embedding
+from tensorflow.keras.layers import LayerNormalization,Conv1D,Dropout,Embedding, Lambda
 from tf_utils import shape_list, merge_heads, split_heads, gelu
 
 def get_embedding(num_embeddings,
@@ -25,14 +25,15 @@ def RelativeEmbedding(input_tensor, weights, max_len):
 
 class RelativeMultiHeadAttn(tf.keras.layers.Layer):
     def __init__(self, d_model, n_head, dropout,max_len,
-                trainning=True, scale=False):
+                trainning=True, scale=False, layer_name=""):
 
         super().__init__()
         self.qkv_linear = Conv1D(filters = 3 * d_model, kernel_size=1)
         self.n_head = n_head
         self.head_dim = d_model // n_head
-        self.dropout_layer = Dropout(dropout)
         self.trainning = trainning
+        if trainning:
+            self.dropout_layer = Dropout(dropout)
         if scale:
             self.scale = tf.math.sqrt(float(self.head_dim))
         else:
@@ -41,10 +42,10 @@ class RelativeMultiHeadAttn(tf.keras.layers.Layer):
         w_init = tf.initializers.GlorotUniform()
         self.r_r_bias = tf.Variable(
             initial_value = w_init(shape=[n_head, self.head_dim],dtype=tf.float32),
-            trainable=True, name="rr_bias")
+            trainable=True, name=layer_name + "rr_bias")
         self.r_w_bias = tf.Variable(
             initial_value=w_init(shape=[n_head, self.head_dim],dtype=tf.float32),
-            trainable=True, name="rw_bias")
+            trainable=True, name=layer_name + "rw_bias")
 
     def call(self, x, pos_embed):
         batch_size, max_len, d_model = shape_list(x)
@@ -130,17 +131,18 @@ class FFN(tf.keras.layers.Layer):
         return ffn1
 
 class attention_block(tf.keras.layers.Layer):
-    def __init__(self, config,training,scale):
+    def __init__(self, config,training,scale,layer_name):
         super(attention_block, self).__init__()
         self.attention = RelativeMultiHeadAttn(
                                 config.embed,
                                 config.head,
                                 config.a_dropout,
                                 training,
-                                scale=scale)
+                                scale=scale,
+                                layer_name=layer_name)
         self.ln0 = LayerNormalization(epsilon=config.layer_norm_epsilon)
         self.ln1 = LayerNormalization(epsilon=config.layer_norm_epsilon)
-        self.ffn = FFN(config,training)
+        self.ffn = FFN(config, training)
     def call(self,x, pos_embed):
         a = self.attention(x, pos_embed)
         x = x + a
@@ -159,11 +161,10 @@ class RelTranformer(tf.keras.layers.Layer):
         super(RelTranformer, self).__init__()
         self.scale = config.scale
         self.config = config
-        self.tf_layers = [attention_block(config, trainning, self.scale) for i in range(config.n_layer)]
+        self.tf_layers = [attention_block(config, trainning, self.scale, layer_name="L"+str(i)) for i in range(config.n_layer)]
         self.wde = Embedding(config.vocab_size, config.embed)
         #位置编码
-        self.weights_embeding = get_embedding(config.max_length,
-                                            config.embed // config.head)
+        self.weights_embeding = get_embedding(config.max_length, config.embed // config.head)
     def call(self,input_ids):
         mask = tf.cast(tf.not_equal(input_ids,0),dtype=tf.int32)
         hidden_state = self.wde(input_ids)

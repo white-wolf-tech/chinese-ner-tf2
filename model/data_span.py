@@ -100,7 +100,7 @@ class Tokenize(object):
         else:
             return self.label_voc["PAD"]
 
-def gen_batch_data_for_train(batch_data,tokenize,is_training=True):
+def gen_batch_data_for_train(batch_data, tokenize, is_training=True):
     batch_,max_len = batch_data
     tokens = []
     head_golds = []
@@ -155,7 +155,7 @@ def parse_span_ner(batch, output, tokenize, thr=0.5):
         tail_positions = tails[0]
         head_types = heads[1]
         tail_types = tails[1]
-        for head_index,head in enumerate(head_positions):
+        for head_index, head in enumerate(head_positions):
             head_type = head_types[head_index]
             tail = None
             tail_type = None
@@ -165,7 +165,7 @@ def parse_span_ner(batch, output, tokenize, thr=0.5):
                     tail_type = tail_types[tail_index]
                     break
             if tail == None:
-                break
+                continue
             else:
                 entity = text[head : tail + 1]
                 if head_type == tail_type:
